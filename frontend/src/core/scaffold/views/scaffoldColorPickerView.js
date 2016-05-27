@@ -1,6 +1,6 @@
 // LICENCE https://github.com/adaptlearning/adapt_authoring/blob/master/LICENSE
 define(function(require) {
-
+    var _ = require('underscore');
     var Backbone = require('backbone');
     var BackboneForms = require('backboneForms');
     var Origin = require('coreJS/app/origin');
@@ -34,15 +34,9 @@ define(function(require) {
         },
 
         render: function() {
-            // Listen to remove:views and remove color picker
-            this.listenTo(Origin, 'remove:views', this.removeColorPicker);
-
             if (this.value === null) {
                 this.value = '';
             }
-            
-            this.setValue(this.value);
-            this.$el.css('backgroundColor', this.getValue());
 
             _.defer(_.bind(function() {
                 var that = this;
@@ -52,21 +46,56 @@ define(function(require) {
                     onChange: function (hsb, hex, rgb) {
                         that.setValue('#' + hex);
                         that.$el.css('backgroundColor', '#' + hex);
-                    },
-                    onBeforeShow: function () {
-                        that.$el.ColorPickerSetColor(that.value);
                     }
                 });
 
+                /*
+                * Append reset button
+                */
+
+                // TODO externalise this...
+                var btnStyle = 'display:inline-block;margin-left:10px;position:relative;vertical-align:top;top:10px;cursor:pointer;';
+                var btn = '<div class="reset" style="' + btnStyle + '"><i class="fa fa-ban"></i> Clear colour</div>';
+                this.$el.after(btn);
+
+                this.$el.siblings('.reset').click(_.bind(this.resetValue, this));
+
+                if(this.value) {
+                    this.setValue(this.value);
+                    this.$el.siblings('.reset').show();
+                }
+                else {
+                    this.$el.siblings('.reset').hide();
+                }
 
             }, this));
-
             return this;
+        },
+
+        remove: function() {
+            this.removeColorPicker();
+            Backbone.Form.editors.Text.prototype.remove.apply(this, arguments);
         },
 
         removeColorPicker: function() {
             var colorpickerId = this.$el.data('colorpickerId');
             $("#"+colorpickerId).remove();
+        },
+
+        setValue: function(newValue) {
+            if(newValue === this.value) return;
+            Backbone.Form.editors.Text.prototype.setValue.apply(this, arguments);
+
+            this.value = newValue;
+            this.$el.css('backgroundColor', this.value);
+            this.$el.ColorPickerSetColor(this.value);
+
+            if(this.value) this.$el.siblings('.reset').show();
+            else this.$el.siblings('.reset').hide();
+        },
+
+        resetValue: function() {
+            this.setValue('');
         }
 
     }, {
@@ -76,8 +105,7 @@ define(function(require) {
     Origin.on('app:dataReady', function() {
         Origin.scaffold.addCustomField('ColorPicker', ScaffoldColorPickerView);
     })
-    
+
 
     return ScaffoldColorPickerView;
-
-})
+});

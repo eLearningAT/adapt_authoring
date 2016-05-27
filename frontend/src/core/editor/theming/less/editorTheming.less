@@ -1,0 +1,55 @@
+// HACK to fix icon positioning
+.sweet-alert .sa-input-error {
+  top: 24px !important;
+}
+
+// vars
+@padding: 30px;
+
+.theming-inner {
+  // shared styles
+  .title {
+    background-color: #e0e8f7;
+    padding: @padding;
+  }
+  .description {
+    padding: @padding;
+    padding-bottom: 20px;
+    p {
+      padding-bottom: 8px;
+    }
+  }
+  button {
+    margin-right: 5px;
+  }
+  // custom styles
+  .live-view {
+    display: none;
+    padding: @padding;
+  }
+  .theme-selector {
+    padding: @padding;
+    padding-top: 0;
+    .tile {
+      label {
+        font-weight: bold;
+        padding-right: 5px;
+      }
+      padding-right: 25px;
+      padding-bottom: 20px;
+      display: inline-block;
+      select {
+        min-width: 150px;
+      }
+    }
+    .buttons-container {
+      display: inline-block;
+    }
+  }
+  .form-container {
+    // HACK to hide fieldset titles
+    .legend {
+      display: none;
+    }
+  }
+}
