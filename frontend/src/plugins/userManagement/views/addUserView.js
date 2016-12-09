@@ -3,7 +3,6 @@ define(function(require){
   var Helpers = require('coreJS/app/helpers');
   var Origin = require('coreJS/app/origin');
   var OriginView = require('coreJS/app/views/originView');
-  var UserCollection = require('../collections/userCollection.js');
 
   var AddUserView = OriginView.extend({
     tagName: 'div',
@@ -12,7 +11,6 @@ define(function(require){
     settings: {
       autoRender: false
     },
-    users: new UserCollection(),
 
     initialize: function() {
       OriginView.prototype.initialize.apply(this, arguments);
@@ -23,8 +21,7 @@ define(function(require){
 
     initData: function() {
       this.listenTo(Origin, 'userManagement:saveUser', this.saveNewUser);
-      this.listenTo(this.users, 'sync', this.onUsersFetched);
-      this.users.fetch();
+      this.getCurrentUser();
     },
 
     render:function(){
@@ -35,26 +32,34 @@ define(function(require){
       this.setViewToReady();
     },
 
-    isValid: function() {
-      var email = this.$('input[name=email]').val().trim();
-      var valid = Helpers.isValidEmail(email);
-      if(valid) {
-        this.$('.field-error').addClass('display-none');
-      } else {
-        this.$('.field-error').removeClass('display-none');
-        Origin.Notify.alert({
-          type: 'error',
-          title: window.polyglot.t('app.validationfailed'),
-          text: window.polyglot.t('app.invalidusernameoremail')
-        });
-      }
-      return valid;
-    },
+    getCurrentUser:function(){
+      $.get('api/user/' + Origin.sessionModel.get('id'),
+        _.bind(this.onUserFetched,this)
+        ).fail(function() {
+         this.goBack();
+       });
+      },
 
-    saveNewUser: function() {
-      if(!this.isValid()) {
-        return;
-      }
+      isValid: function() {
+        var email = this.$('input[name=email]').val().trim();
+        var valid = Helpers.isValidEmail(email);
+        if(valid) {
+          this.$('.field-error').addClass('display-none');
+        } else {
+          this.$('.field-error').removeClass('display-none');
+          Origin.Notify.alert({
+            type: 'error',
+            title: window.polyglot.t('app.validationfailed'),
+            text: window.polyglot.t('app.invalidusernameoremail')
+          });
+        }
+        return valid;
+      },
+
+      saveNewUser: function() {
+        if(!this.isValid()) {
+          return;
+        }
       // submit form data
       this.$('form.addUser').ajaxSubmit({
         error: _.bind(this.onAjaxError, this),
@@ -110,32 +115,20 @@ define(function(require){
       });
     },
 
-    isCurrentUserTenantAdmin:function(){
-     var currentUserId = Origin.sessionModel.get('id');
-     var isTenantadmin = false;
-
-     this.currentUser = _.find(this.users.models, function(user) {
-      return user.get('_id') === currentUserId;
-    });
-
-     if(this.currentUser){
+    onUserFetched:function(user){
+      var tenantadmin;
       //ASSUMPTION:user always have one and only role
-      var currentUserRole = this.currentUser.get('roles')[0];
+      var currentUserRole = user.roles[0];
       if(currentUserRole.name === 'Tenant Admin'){
-        isTenantadmin = this.currentUser;
-        this.model.set('tenantAdmin',isTenantadmin);
+        tenantadmin = user;
+        this.model.set('tenantAdmin',tenantadmin);
       }
+      this.render();
     }
-  },
 
-  onUsersFetched:function(models, reponse, options){
-    this.isCurrentUserTenantAdmin();
-    this.render();
-  }
-
-}, {
-  template: 'addUser'
-});
+  }, {
+    template: 'addUser'
+  });
 
   return AddUserView;
 });

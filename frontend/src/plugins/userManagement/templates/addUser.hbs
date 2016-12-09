@@ -17,8 +17,8 @@
       <label for="tenant">{{t 'app.tenant'}}</label>
       {{#if tenantAdmin}}
       <select name="_tenantId">
-        <option value="{{{tenantAdmin.attributes._tenantId._id}}}">
-          {{{tenantAdmin.attributes._tenantId.name}}}
+        <option value="{{{tenantAdmin._tenantId._id}}}">
+          {{{tenantAdmin._tenantId.name}}}
         </option>
       </select>
       {{else}}
